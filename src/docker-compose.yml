@@ -1,25 +1,33 @@
-version: '3.3'
+version: '3.8'
+
 services:
   db:
-    image: mysql:5.7
-    restart: always
+    image: postgres:latest
+    container_name: db
     environment:
-      MYSQL_DATABASE: 'db'
-      # So you don't have to use root, but you can if you like
-      MYSQL_USER: 'user'
-      # You can use whatever password you like
-      MYSQL_PASSWORD: 'boopesh'
-      # Password for root access
-      MYSQL_ROOT_PASSWORD: 'boopesh@popos'
+      POSTGRES_DB: shopclassy
+      POSTGRES_USER: shopclassy
+      POSTGRES_PASSWORD: password
     ports:
-      # <Port exposed> : < MySQL Port running inside container>
-      - '3306:3306'
-    expose:
-      # Opens port 3306 on the container
-      - '3306'
-      # Where our data will be persisted
+      - "5432:5432"
     volumes:
-      - my-db:/var/lib/mysql
-# Names our volume
+      - postgres_data:/var/lib/postgresql/data
+
+  app:
+    build:
+      context: .
+    container_name: app
+    depends_on:
+      - db
+    environment:
+      - POSTGRES_DB=shopclassy
+      - POSTGRES_USER=shopclassy
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+    volumes:
+      - .:/app
+    command: ["python", "main.py"]
+
 volumes:
-  my-db:
+  postgres_data:

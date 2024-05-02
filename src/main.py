@@ -108,6 +108,7 @@ class user_page():
 
         new_stock = product[0][2] - quantity
         cursor.execute("UPDATE products SET quantity = %s WHERE product_id::integer = %s;", (new_stock, po_product_id))
+        
         connector.commit() 
         
         cart_prompt = (input("wanna view cart ?(y/n): "))
