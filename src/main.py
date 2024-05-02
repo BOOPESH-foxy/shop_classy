@@ -6,6 +6,12 @@ from unicodedata import name
 import psycopg2
 from tabulate import tabulate
 import pwinput
+import smtplib
+from email.message import EmailMessage
+import data
+import socket
+
+
     
 class admin_page():
     
@@ -103,6 +109,7 @@ class user_page():
         new_stock = product[0][2] - quantity
         cursor.execute("UPDATE products SET quantity = %s WHERE product_id::integer = %s;", (new_stock, po_product_id))
         connector.commit() 
+        
         cart_prompt = (input("wanna view cart ?(y/n): "))
         if cart_prompt in ['Y' or 'y']:
             view_cart()
@@ -110,19 +117,41 @@ class user_page():
             print("Thanks for shopping !")
         
     def view_cart():
+        global table_data
+        table_data = []
         cursor.execute("SELECT * FROM cart where username like %s;", (username,))
         cart_items = cursor.fetchall()
         if not cart_items:
             print("No cart_items found.")
             return
-        table_data = []
+
         for product in cart_items:
             table_data.append([product[0],product[1], product[2],(product[4])])
 
         headers = ["Cart Id" ,"Product Id", "Quantity","Products_total"]
         print(tabulate(table_data, headers=headers, tablefmt="psql")) 
+        # print(table_data)
+        user_page.mail_gen()
         
-   
+        
+    def mail_gen():
+
+        Message = EmailMessage()
+
+        Message["subject"] = "Your cart !"
+        Message["From"] = data.from_mail
+        Message["To"] = input("Enter valid mail address for cart bill : ")
+        # Message["To"] = data.to_mail
+        Message.set_content("Cart id:%s\nPurcahsed item code:%s \nQuantity:%s \nBill:%s"%(table_data[0][0],table_data[0][1], table_data[0][2],table_data[0][3]
+                                                                                       ))
+
+        # to establish secure connection
+        server = smtplib.SMTP_SSL("smtp.gmail.com",465)
+        server.login(data.from_mail,data.app_password)
+
+        server.send_message(Message)
+        print("Mail sent and server has been closed !")
+        server.quit()
             
             
 if __name__=="__main__":
