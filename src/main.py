@@ -99,12 +99,12 @@ class user_page():
             print("Insufficient stock.")
             return
 
-        cursor.execute("INSERT INTO cart (product_id, quantity,username) VALUES (%s, %s, %s) RETURNING cart_id;",(po_product_id,quantity,username))
+        cursor.execute("INSERT INTO cart (product_id, quantity,username) VALUES (%s, %s, %s);",(po_product_id,quantity,username))
         print("Product added to cart !")
 
-        new_stock = product['stock'] - quantity
-        cursor.execute("UPDATE products SET quantity = %s WHERE product_id = %s;", (new_stock, product_id))
-        connection.commit() 
+        new_stock = product[0][2] - quantity
+        cursor.execute("UPDATE products SET quantity = %s WHERE product_id::integer = %s;", (new_stock, po_product_id))
+        connector.commit() 
 
    
             
