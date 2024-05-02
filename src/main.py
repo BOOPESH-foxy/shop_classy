@@ -60,9 +60,7 @@ class admin_page():
             admin_page.delete_product()
         else:
             work()
-        
-        if q in ['n' or 'N']:
-            work()
+
         
         
 class user_page():
@@ -77,9 +75,9 @@ class user_page():
             return
         table_data = []
         for product in products:
-            table_data.append([product[0],product[1], float(product[2])])
+            table_data.append([product[0],product[1], float(product[2]),float(product[3])])
 
-        headers = ["Id" ,"Product Name", "Price ($)"]
+        headers = ["Id" ,"Product Name", "Quantity","Price ($)"]
         print(tabulate(table_data, headers=headers, tablefmt="psql"))       
         
     def place_order(self):
@@ -98,14 +96,32 @@ class user_page():
         if quantity > product[0][2]:
             print("Insufficient stock.")
             return
-
-        cursor.execute("INSERT INTO cart (product_id, quantity,username) VALUES (%s, %s, %s);",(po_product_id,quantity,username))
+        total_cost = quantity * product[0][1]
+        cursor.execute("INSERT INTO cart (product_id, quantity,username,total_cost) VALUES (%s, %s, %s,%s);",(po_product_id,quantity,username,total_cost))
         print("Product added to cart !")
 
         new_stock = product[0][2] - quantity
         cursor.execute("UPDATE products SET quantity = %s WHERE product_id::integer = %s;", (new_stock, po_product_id))
         connector.commit() 
+        cart_prompt = (input("wanna view cart ?(y/n): "))
+        if cart_prompt in ['Y' or 'y']:
+            view_cart()
+        elif cart_prompt in ['N' or 'n']:
+            print("Thanks for shopping !")
+        
+    def view_cart():
+        cursor.execute("SELECT * FROM cart where username like %s;", (username,))
+        cart_items = cursor.fetchall()
+        if not cart_items:
+            print("No cart_items found.")
+            return
+        table_data = []
+        for product in cart_items:
+            table_data.append([product[0],product[1], product[2],(product[4])])
 
+        headers = ["Cart Id" ,"Product Id", "Quantity","Products_total"]
+        print(tabulate(table_data, headers=headers, tablefmt="psql")) 
+        
    
             
             
@@ -124,13 +140,15 @@ if __name__=="__main__":
         isadmin=cursor.fetchall()
         
         if isadmin[0][0] == 0:
-                print("1. View available products:\n2. Place your order\n3. Exit")
+                print("1. View available products:\n2. Place your order\n3. View Order\n4. Exit")
                 op=int(input("Enter your choice:"))
                 if op==1:
                     progres = user_page.view_products()
                 elif op==2:
-                    progres = user_page.place_order(username)    
+                    progres = user_page.place_order()    
                 elif op==3:
+                    progres = user_page.view_cart()
+                elif op==4:
                     exit()
         elif isadmin[0][0] == 1:
             work()
@@ -153,6 +171,7 @@ if __name__=="__main__":
                 
             elif case==3:
                 admin_page.delete_product()
+                
             choise=input("wanna exit..(y/n)")
             if choise in ['Y' or 'y']:
                 exit()
