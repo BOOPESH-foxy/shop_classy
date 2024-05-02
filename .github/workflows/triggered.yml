@@ -1,0 +1,17 @@
+name: Print Data on Git Push by organisation
+on:
+  push:
+    paths:
+      - 'main.py' # Trigger the workflow when any Python file is pushed
+
+jobs:
+  print-data:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Print data
+        run: |
+          echo "wooooow , You made a commit "
+#python script and login to be added 
