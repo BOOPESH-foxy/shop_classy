@@ -1,0 +1,37 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Build') {
+            steps {
+                sh 'docker build -t capstone-image .'
+            }
+        }
+        stage('Push') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: '989407', passwordVariable: 'HEYboo@013')]) {
+                    script {
+                        docker.withRegistry('https://index.docker.io/v1/', 989407, HEYboo@013) {
+                            if (env.BRANCH_NAME == 'dev') {
+                                sh 'docker tag myapp 989407/dev:latest'
+                                sh 'docker push 989407/dev:latest'
+                            } else if (env.BRANCH_NAME == 'master') {
+                                sh 'docker tag myapp 989407/prod:latest'
+                                sh 'docker push 989407/prod:latest'
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        stage('Deploy') {
+            steps {
+                withAWS(credentials: '174be015-4439-495c-a527-c592651c8081
+                    ', region: 'us-west-2') {
+                    sh 'aws ec2 run-instances --image-id ami-09298640a92b2d12c --count 1 --instance-type t2.micro'
+                }
+            }
+        }
+
+    }
+}
